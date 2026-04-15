@@ -14,6 +14,10 @@ Owners: []
 RelatedFiles:
     - Path: pkg/exporttimeline/loader.go
       Note: Programmatic loader that executes timeline query commands and decodes their results
+    - Path: pkg/exporttimeline/payload.go
+      Note: Normalized timeline payload builder on top of SQL result sets
+    - Path: pkg/exporttimeline/payload_test.go
+      Note: Focused coverage for file-series densification and jump-hash shaping
     - Path: pkg/exporttimeline/types.go
       Note: Typed row/result models for the SQL-backed Proposal 4 bridge layer
     - Path: ttmp/2026/04/15/GMT-007--implement-proposal-4-timeline-visualization-for-transcript-exports/query-commands/timeline/timeline-buckets.sql
@@ -28,10 +32,11 @@ RelatedFiles:
       Note: Simple file-based thread candidate query
 ExternalSources: []
 Summary: Chronological implementation diary for Proposal 4 timeline visualization work.
-LastUpdated: 2026-04-15T02:05:00-04:00
+LastUpdated: 2026-04-15T02:15:00-04:00
 WhatFor: Capture the implementation sequence, rationale, validation results, and review guidance for the timeline export work.
 WhenToUse: Read this when continuing Proposal 4 work or reviewing how the SQL-first timeline foundation was established.
 ---
+
 
 
 
@@ -346,3 +351,154 @@ go run /tmp/check_timeline_loader.go
 **Current task slice completed:**
 - add timeline export package and typed row models
 - add SQL query-result loader for Proposal 4 timeline commands
+
+## Step 3: Build the first normalized timeline payload from SQL results
+
+With the SQL loader in place, the next missing layer was the actual payload shape the future renderer will want. Raw SQL row slices are useful for debugging, but they are not yet a timeline payload. The browser will need dense bucket arrays, file series aligned to bucket indices, idle windows in a stable form, and deterministic reader jump hashes.
+
+This slice built that first normalized payload layer in `pkg/exporttimeline` without yet committing to the final HTML renderer. That keeps the work staged: SQL first, Go merger second, browser renderer third.
+
+### Prompt Context
+
+**User prompt (verbatim):** (same as Step 1)
+
+**Assistant interpretation:** Continue the Proposal 4 implementation by turning SQL outputs into a concrete timeline payload the browser can eventually consume.
+
+**Inferred user intent:** Progress steadily from analysis primitives toward a real export pipeline while keeping each intermediate layer testable.
+
+**Commit (code):** pending — "feat: build normalized timeline payload from sql results"
+
+### What I did
+
+- Added normalized timeline payload types in:
+  - `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/payload.go`
+- Added:
+  - `TimelinePayload`
+  - `TimelineBucket`
+  - `TimelineFileSeries`
+  - `TimelineIdleWindow`
+  - `TimelinePhaseSignal`
+  - `TimelineThreadSignal`
+- Implemented `BuildTimelinePayload(...)` to:
+  - convert bucket rows into stable payload buckets,
+  - attach `#turn-<idx>` jump hashes,
+  - build dense file series arrays from sparse SQL rows,
+  - carry idle-window rows into normalized payload structures,
+  - attach bucket-derived jump targets to phase signals,
+  - attach jump hashes to thread-signal spans.
+- Added `payload_test.go` to verify:
+  - bucket jump hashes,
+  - dense series materialization,
+  - dominant operation placement,
+  - phase-signal jump hashing,
+  - thread-signal jump hashing.
+- Ran package tests:
+  ```bash
+  go test ./pkg/exporttimeline -count=1
+  ```
+- Performed an ad hoc end-to-end validation by loading SQL timeline data for a real session and then building the normalized payload.
+
+### Why
+
+This layer is the bridge between analysis and rendering. It prevents the future browser runtime from needing to understand sparse SQL result tables directly and gives the exporter a place to normalize jump-target behavior consistently.
+
+### What worked
+
+- The package now has a proper normalized payload model instead of only raw SQL row slices.
+- Dense file series generation works from sparse per-file per-bucket rows.
+- Bucket, phase-signal, and thread-signal objects now all carry Proposal 2-compatible reader hashes.
+- `payload_test.go` gives us at least one focused unit test around payload shaping logic.
+- The ad hoc validation confirmed a real session can go through:
+  - SQL query commands,
+  - typed SQL loader,
+  - normalized timeline payload builder.
+
+### What didn't work
+
+The first version of `BuildTimelinePayload(...)` tried to coerce `IdleWindowRow` directly into `TimelineIdleWindow` with a type conversion. That failed because they are distinct named struct types.
+
+Fix applied:
+- switched to explicit field-by-field mapping for idle windows.
+
+### What I learned
+
+The timeline implementation is naturally splitting into three useful boundaries:
+
+1. **query commands**
+   - reusable temporal analysis logic
+2. **Go payload normalization**
+   - stable browser-oriented data model
+3. **browser rendering**
+   - visual layout and interaction only
+
+That split feels right and is already making the work easier to reason about.
+
+### What was tricky to build
+
+The subtle part here was deciding which structures should already become dense arrays and which should remain sparse row-style records.
+
+- buckets should remain a row-per-bucket array,
+- file activity really benefits from dense aligned arrays,
+- phase/thread structures should keep their own semantics and just gain jump-target normalization.
+
+This is important because premature densification of every structure would make the payload larger and less clear.
+
+### What warrants a second pair of eyes
+
+- Whether `TimelinePhaseSignal` should stay as bucket-local signals or evolve into a higher-level phase-candidate structure before browser rendering begins.
+- Whether file-series payloads should eventually include per-bucket jump targets for more precise file-band click behavior.
+- Whether the current normalized payload belongs in `pkg/exporttimeline` permanently or should later merge with a broader export payload subsystem.
+
+### What should be done in the future
+
+- Add manual/imported phase-span merging.
+- Add manual/imported thread-span merging.
+- Build the first self-contained timeline HTML renderer on top of the normalized payload.
+
+### Code review instructions
+
+Start here:
+- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/payload.go`
+- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/payload_test.go`
+- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/loader.go`
+
+Validate with:
+
+```bash
+cd /home/manuel/code/wesen/corporate-headquarters/go-minitrace
+go test ./pkg/exporttimeline -count=1
+```
+
+Optional end-to-end ad hoc validation:
+
+```bash
+cd /home/manuel/code/wesen/corporate-headquarters/go-minitrace
+cat <<'EOF' >/tmp/check_timeline_payload.go
+package main
+import (
+  "context"
+  "fmt"
+  "github.com/go-go-golems/go-minitrace/pkg/exporttimeline"
+)
+func main(){
+  data, err := exporttimeline.LoadSQLTimelineData(context.Background(), exporttimeline.LoadOptions{
+    QueryRepositories: []string{"./ttmp/2026/04/15/GMT-007--implement-proposal-4-timeline-visualization-for-transcript-exports/query-commands"},
+    ArchiveGlobs: []string{"./output/active/*/*.minitrace.json"},
+    SessionID: "019d03aa-ddee-7403-83d1-2ff075e82d50",
+  })
+  if err != nil { panic(err) }
+  payload, err := exporttimeline.BuildTimelinePayload(data, exporttimeline.BuildPayloadOptions{BucketMinutes: 30})
+  if err != nil { panic(err) }
+  fmt.Printf("bucketCount=%d fileSeries=%d idle=%d phaseSignals=%d threadSignals=%d firstBucketHash=%q\n", payload.BucketCount, len(payload.FileSeries), len(payload.IdleWindows), len(payload.PhaseSignals), len(payload.ThreadSignals), payload.Buckets[0].JumpHash)
+}
+EOF
+go run /tmp/check_timeline_payload.go
+```
+
+### Technical details
+
+**Current task slice completed:**
+- build bucket arrays from SQL output
+- build file series from SQL output
+- build idle windows from SQL output
+- emit deterministic reader jump targets for buckets/phases/threads

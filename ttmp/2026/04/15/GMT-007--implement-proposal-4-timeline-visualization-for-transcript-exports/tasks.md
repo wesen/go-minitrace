@@ -20,12 +20,12 @@
 ### Go-side payload assembly
 - [x] Add timeline export package and types
 - [x] Add query-result loader/merger for timeline query commands
-- [ ] Build bucket arrays from SQL output
-- [ ] Build file series from SQL output
-- [ ] Build idle windows from SQL output
+- [x] Build bucket arrays from SQL output
+- [x] Build file series from SQL output
+- [x] Build idle windows from SQL output
 - [ ] Merge manual/imported phase spans with SQL-derived phase signals
 - [ ] Merge manual/imported thread spans with SQL-derived thread signals
-- [ ] Emit deterministic reader jump targets for buckets/phases/threads
+- [x] Emit deterministic reader jump targets for buckets/phases/threads
 
 ### Browser rendering
 - [ ] Add self-contained timeline HTML template/runtime
