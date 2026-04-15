@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ .PageTitle }}</title>
+  <style>{{ .EmbeddedCSS }}</style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="timeline-tooltip" class="tooltip" hidden></div>
+  <script id="minitrace-timeline-export-data" type="application/json">{{ .PayloadJSON }}</script>
+  <script>{{ .EmbeddedJS }}</script>
+</body>
+</html>

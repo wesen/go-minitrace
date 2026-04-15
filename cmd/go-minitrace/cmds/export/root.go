@@ -11,6 +11,11 @@ func NewCommand() (*cobra.Command, error) {
 	if err != nil {
 		return nil, err
 	}
+	timelineCmd, err := newTimelineCommand()
+	if err != nil {
+		return nil, err
+	}
 	root.AddCommand(htmlCmd)
+	root.AddCommand(timelineCmd)
 	return root, nil
 }
