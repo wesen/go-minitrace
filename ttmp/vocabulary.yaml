@@ -31,6 +31,16 @@ topics:
       description: Web UI architecture and implementation
     - slug: transcript-analysis
       description: Transcript viewing and analysis workflows
+    - slug: gstreamer
+      description: GStreamer multimedia and pipeline work
+    - slug: pipeline-debugging
+      description: Pipeline debugging and system-behavior investigation
+    - slug: html-export
+      description: HTML export, static packaging, and single-file delivery
+    - slug: ui-design
+      description: User interface design and interaction models
+    - slug: readonly-exports
+      description: Read-only self-contained export formats
     - slug: code-review
       description: Code review and analysis
     - slug: gpt
