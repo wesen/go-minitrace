@@ -21,6 +21,7 @@ interface BlockCardProps {
   ) => void;
   onOpenAnnotation?: (annotation: Annotation) => void;
   onToggleExpanded?: () => void;
+  showAnnotationActions?: boolean;
 }
 
 function BlockCardImpl({
@@ -34,6 +35,7 @@ function BlockCardImpl({
   onCreateScopedAnnotation,
   onOpenAnnotation,
   onToggleExpanded,
+  showAnnotationActions = true,
 }: BlockCardProps) {
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
   const [showAllTools, setShowAllTools] = useState(false);
@@ -86,6 +88,7 @@ function BlockCardImpl({
             onOpenAnnotation={onOpenAnnotation}
             showAllTools={showAllTools}
             onShowAllTools={() => setShowAllTools(true)}
+            showAnnotationActions={showAnnotationActions}
           />
         </Box>
       </Collapse>

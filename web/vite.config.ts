@@ -19,6 +19,12 @@ export default defineConfig({
   },
   build: {
     assetsDir: 'static',
+    rollupOptions: {
+      input: {
+        main: path.resolve(dirname, 'index.html'),
+        exportReader: path.resolve(dirname, 'export-reader.html'),
+      },
+    },
   },
   test: {
     projects: [{

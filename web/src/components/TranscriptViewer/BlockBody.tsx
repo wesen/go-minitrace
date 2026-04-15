@@ -28,6 +28,7 @@ interface BlockBodyProps {
   onOpenAnnotation?: (annotation: Annotation) => void;
   showAllTools: boolean;
   onShowAllTools: () => void;
+  showAnnotationActions?: boolean;
 }
 
 /** Format token counts compactly */
@@ -166,6 +167,7 @@ function BlockBodyImpl({
   onOpenAnnotation,
   showAllTools,
   onShowAllTools,
+  showAnnotationActions = true,
 }: BlockBodyProps) {
   const hasArtifacts =
     block.artifacts.commits.length > 0 ||
@@ -246,14 +248,16 @@ function BlockBodyImpl({
               </Typography>
               <TurnMetaChips turn={t} />
               <Box sx={{ flex: 1 }} />
-              <Button
-                size="small"
-                variant="text"
-                sx={{ minWidth: 0, px: 0.75, fontSize: "0.7rem" }}
-                onClick={() => onCreateScopedAnnotation?.("turn", String(t.idx))}
-              >
-                Annotate
-              </Button>
+              {showAnnotationActions && (
+                <Button
+                  size="small"
+                  variant="text"
+                  sx={{ minWidth: 0, px: 0.75, fontSize: "0.7rem" }}
+                  onClick={() => onCreateScopedAnnotation?.("turn", String(t.idx))}
+                >
+                  Annotate
+                </Button>
+              )}
               {(turnAnnotations[String(t.idx)] ?? []).slice(0, 2).map((ann) => (
                 <Tooltip
                   key={ann.id}
@@ -319,6 +323,7 @@ function BlockBodyImpl({
                     annotations={toolCallAnnotations[tc.id] ?? []}
                     onAnnotate={() => onCreateScopedAnnotation?.("tool_call", tc.id)}
                     onOpenAnnotation={onOpenAnnotation}
+                    showAnnotationActions={showAnnotationActions}
                   />
                 ))}
                 {!showAllTools && t.tool_calls_in_turn.length > 5 && (

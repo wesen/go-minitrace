@@ -22,6 +22,7 @@ interface ToolCallRowProps {
   annotations?: Annotation[];
   onAnnotate?: () => void;
   onOpenAnnotation?: (annotation: Annotation) => void;
+  showAnnotationActions?: boolean;
 }
 
 /** Simple line-based diff: color removed lines red, added lines green */
@@ -264,6 +265,7 @@ function ToolCallRowImpl({
   annotations = [],
   onAnnotate,
   onOpenAnnotation,
+  showAnnotationActions = true,
 }: ToolCallRowProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   // Build a meaningful summary for the collapsed tool call row.
@@ -364,17 +366,19 @@ function ToolCallRowImpl({
             </Tooltip>
           ))}
         </Stack>
-        <Button
-          size="small"
-          variant="text"
-          sx={{ minWidth: 0, px: 0.75, fontSize: "0.7rem" }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onAnnotate?.();
-          }}
-        >
-          Annotate
-        </Button>
+        {showAnnotationActions && (
+          <Button
+            size="small"
+            variant="text"
+            sx={{ minWidth: 0, px: 0.75, fontSize: "0.7rem" }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAnnotate?.();
+            }}
+          >
+            Annotate
+          </Button>
+        )}
         <Typography variant="caption" sx={{ fontFamily: "monospace", opacity: 0.6, minWidth: 50, textAlign: "right" }}>
           {(tc.output.duration_ms / 1000).toFixed(1)}s
         </Typography>
