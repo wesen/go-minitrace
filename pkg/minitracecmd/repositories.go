@@ -1,6 +1,7 @@
 package minitracecmd
 
 import (
+	"context"
 	"encoding/csv"
 	"os"
 	"path/filepath"
@@ -21,12 +22,22 @@ type AppConfig struct {
 }
 
 func loadAppConfig(appName string) (*AppConfig, error) {
-	configPath, err := glazedconfig.ResolveAppConfigPath(appName, "")
+	files, _, err := glazedconfig.NewPlan(
+		glazedconfig.WithLayerOrder(glazedconfig.LayerSystem, glazedconfig.LayerUser),
+		glazedconfig.WithDedupePaths(),
+	).Add(
+		glazedconfig.SystemAppConfig(appName),
+		glazedconfig.XDGAppConfig(appName),
+		glazedconfig.HomeAppConfig(appName),
+	).Resolve(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "could not resolve app config path")
 	}
-
-	return loadAppConfigFromPath(configPath)
+	if len(files) == 0 {
+		return &AppConfig{}, nil
+	}
+	// Prefer the last resolved file so user-level config wins over broader layers.
+	return loadAppConfigFromPath(files[len(files)-1].Path)
 }
 
 func loadAppConfigFromPath(configPath string) (*AppConfig, error) {
