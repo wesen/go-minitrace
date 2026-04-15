@@ -14,7 +14,7 @@ export default defineConfig({
     rollupOptions: {
       input: path.resolve(dirname, 'export-reader.html'),
       output: {
-        inlineDynamicImports: true,
+        codeSplitting: false,
         entryFileNames: 'static/export-reader.js',
         chunkFileNames: 'static/export-reader-[name].js',
         assetFileNames: 'static/[name][extname]',
