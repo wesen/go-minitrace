@@ -525,7 +525,7 @@ I deliberately kept this slice on the backend side. The browser renderer is stil
 
 **Inferred user intent:** Finish the payload layer so Proposal 4 can move into renderer work with a stable, richer data model.
 
-**Commit (code):** pending — "feat: merge manual and derived timeline markers"
+**Commit (code):** `8ee06764413c326a47448c7231ae80577fb2ff15` — "feat: merge manual and derived timeline markers"
 
 ### What I did
 
