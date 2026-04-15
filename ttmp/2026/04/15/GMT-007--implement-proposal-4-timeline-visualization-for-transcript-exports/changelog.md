@@ -11,3 +11,7 @@ Step 2: Added the first Go-side bridge package for Proposal 4 under `pkg/exportt
 ## 2026-04-15
 
 Step 3: Added the first normalized timeline payload layer on top of the SQL results, including dense file-series generation, idle-window normalization, and Proposal 2-compatible `#turn-*` jump hashes for buckets, phase signals, and thread signals.
+
+## 2026-04-15
+
+Step 4: Added merged Proposal 4 phase/thread structures on top of the SQL signals, including annotation-backed manual/import support via `timeline-phase` / `timeline-thread` tags plus detail JSON, grouped derived phase markers/thread spans, and merge rules that let curated markers coexist with or override matching derived candidates.

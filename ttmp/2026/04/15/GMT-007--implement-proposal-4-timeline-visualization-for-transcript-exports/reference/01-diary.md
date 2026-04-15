@@ -14,6 +14,10 @@ Owners: []
 RelatedFiles:
     - Path: pkg/exporttimeline/loader.go
       Note: Programmatic loader that executes timeline query commands and decodes their results
+    - Path: pkg/exporttimeline/manual.go
+      Note: Annotation-backed manual/import marker parser and extractor for Proposal 4 phases/threads
+    - Path: pkg/exporttimeline/manual_test.go
+      Note: Focused coverage for Proposal 4 manual/import annotation parsing
     - Path: pkg/exporttimeline/payload.go
       Note: Normalized timeline payload builder on top of SQL result sets
     - Path: pkg/exporttimeline/payload_test.go
@@ -32,10 +36,11 @@ RelatedFiles:
       Note: Simple file-based thread candidate query
 ExternalSources: []
 Summary: Chronological implementation diary for Proposal 4 timeline visualization work.
-LastUpdated: 2026-04-15T02:15:00-04:00
+LastUpdated: 2026-04-15T03:05:00-04:00
 WhatFor: Capture the implementation sequence, rationale, validation results, and review guidance for the timeline export work.
 WhenToUse: Read this when continuing Proposal 4 work or reviewing how the SQL-first timeline foundation was established.
 ---
+
 
 
 
@@ -502,3 +507,166 @@ go run /tmp/check_timeline_payload.go
 - build file series from SQL output
 - build idle windows from SQL output
 - emit deterministic reader jump targets for buckets/phases/threads
+
+## Step 4: Merge manual/imported markers with SQL-derived phases and threads
+
+The next slice completed the remaining Go-side payload-assembly tasks that were still open in GMT-007: bringing manual/imported phase markers and thread spans into the normalized timeline payload, and merging them with the SQL-derived signal data.
+
+I deliberately kept this slice on the backend side. The browser renderer is still not started. The immediate goal was to make the payload itself rich enough that a future renderer can show both:
+
+- SQL-derived temporal structure, and
+- human/imported timeline markers that were added intentionally.
+
+### Prompt Context
+
+**User prompt (verbatim):** "ok go ahead."
+
+**Assistant interpretation:** Continue from the normalized payload slice into the remaining Go-side merge work before starting browser rendering.
+
+**Inferred user intent:** Finish the payload layer so Proposal 4 can move into renderer work with a stable, richer data model.
+
+**Commit (code):** pending — "feat: merge manual and derived timeline markers"
+
+### What I did
+
+- Extended the normalized payload in:
+  - `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/payload.go`
+- Added explicit higher-level timeline structures:
+  - `TimelinePhaseMarker`
+  - `TimelineThreadSegment`
+  - `TimelineThreadSpan`
+- Kept the lower-level signal arrays too:
+  - `PhaseSignals`
+  - `ThreadSignals`
+- Added manual/import parsing support in:
+  - `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/manual.go`
+- Added a concrete first convention for manual/imported Proposal 4 markers using existing synced annotations:
+  - session-scoped annotation
+  - tag `timeline-phase` or `timeline-thread`
+  - JSON payload stored in `annotation.content.detail`
+- Implemented `ExtractManualTimelineMarkers(...)`.
+- Updated `BuildTimelinePayload(...)` so it can now:
+  - parse manual phase/thread markers from annotations,
+  - build derived phase markers from contiguous SQL phase-signal buckets,
+  - build grouped derived thread spans from SQL thread-signal rows,
+  - merge manual and derived phase/thread structures,
+  - keep Proposal 2-compatible `#turn-*` jump hashes on the merged structures.
+- Added tests in:
+  - `pkg/exporttimeline/manual_test.go`
+  - `pkg/exporttimeline/payload_test.go`
+- Updated the Proposal 4 design doc to record the current annotation-based manual/import convention.
+
+### Why
+
+Proposal 4 is not just a heatmap. The design explicitly calls for trustworthy manual/imported phase and thread structures before heavy automatic heuristics. Without this slice, the payload still only knew about SQL-derived signals, which are good hints but not yet the full timeline story.
+
+This merge layer also creates a practical bridge to the existing annotation workflow instead of forcing a brand-new archive schema immediately.
+
+### What worked
+
+- The payload now contains both low-level signals and higher-level merged markers/spans.
+- Manual/imported markers can be carried through ordinary synced annotations rather than needing a new file format first.
+- Derived phase signals are now grouped into phase-marker spans instead of staying only bucket-local.
+- Derived thread signals are now grouped into segmented thread spans per file path.
+- Manual phase markers take precedence over overlapping SQL-derived phase spans, which keeps the eventual phase ribbon cleaner.
+- Exact manual thread spans can suppress exact duplicate SQL-derived thread spans for the same file path while still preserving non-duplicate derived spans.
+- `go test ./pkg/exporttimeline -count=1` passes.
+- A real-session ad hoc run still works after the merge changes and now emits `phaseMarkers` in addition to raw `phaseSignals`.
+
+### What didn't work
+
+There was no major blocker in this slice, but there was one modeling decision that needed care:
+
+- if derived thread signals are grouped into segmented spans by file path, we need a merge rule that does not accidentally throw away non-overlapping derived segments just because one manual thread exists.
+
+I kept the first implementation conservative:
+
+- exact duplicate manual thread spans suppress matching derived spans,
+- otherwise both can coexist,
+- and manual phase markers suppress overlapping derived phase markers because the phase ribbon benefits more from precedence than the thread view does.
+
+### What I learned
+
+The payload is now settling into a more stable shape with three distinct layers:
+
+1. **raw SQL-derived signals**
+   - good for debugging and future analysis reuse
+2. **merged timeline markers/spans**
+   - the structures the browser will actually want to render
+3. **reader jump links**
+   - the connective tissue back into Proposal 2
+
+That split feels strong. It lets the renderer stay simple while still preserving the lower-level evidence that produced the rendered view.
+
+### What was tricky to build
+
+The tricky part was not JSON decoding. It was picking a manual/import convention that is immediately usable without destabilizing the archive schema.
+
+Using existing `minitrace.Annotation` records with tags plus detail-JSON turned out to be a good pragmatic compromise:
+
+- it respects the current schema,
+- it works with existing SQLite/import/sync workflows,
+- and it gives Proposal 4 a real operator path for curated markers right away.
+
+### What warrants a second pair of eyes
+
+- Whether the current annotation tag/detail convention is the right long-term import path or only a short-term bridge.
+- Whether phase-marker precedence should stay “manual beats overlapping derived” or become more configurable later.
+- Whether derived thread grouping should eventually preserve more per-segment evidence than just grouped file-path segments.
+
+### What should be done in the future
+
+- Add a dedicated workflow note/playbook for preparing Proposal 4 phase/thread marker annotations.
+- Start the browser rendering slice now that the payload includes merged phase markers and thread spans.
+- Decide later whether a dedicated sidecar import format is still needed once the annotation-based workflow is exercised on real sessions.
+
+### Code review instructions
+
+Start here:
+- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/manual.go`
+- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/payload.go`
+- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/manual_test.go`
+- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/payload_test.go`
+
+Then cross-check the updated design note:
+- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/ttmp/2026/04/15/GMT-007--implement-proposal-4-timeline-visualization-for-transcript-exports/design-doc/01-proposal-4-timeline-visualization-implementation-and-analysis-guide.md`
+
+Validate with:
+
+```bash
+cd /home/manuel/code/wesen/corporate-headquarters/go-minitrace
+go test ./pkg/exporttimeline -count=1
+```
+
+Optional ad hoc validation:
+
+```bash
+cd /home/manuel/code/wesen/corporate-headquarters/go-minitrace
+cat <<'EOF' >/tmp/check_timeline_markers.go
+package main
+import (
+  "context"
+  "fmt"
+  "github.com/go-go-golems/go-minitrace/pkg/exporttimeline"
+)
+func main(){
+  data, err := exporttimeline.LoadSQLTimelineData(context.Background(), exporttimeline.LoadOptions{
+    QueryRepositories: []string{"./ttmp/2026/04/15/GMT-007--implement-proposal-4-timeline-visualization-for-transcript-exports/query-commands"},
+    ArchiveGlobs: []string{"./output/active/*/*.minitrace.json"},
+    SessionID: "019d03aa-ddee-7403-83d1-2ff075e82d50",
+  })
+  if err != nil { panic(err) }
+  payload, err := exporttimeline.BuildTimelinePayload(data, exporttimeline.BuildPayloadOptions{BucketMinutes: 30})
+  if err != nil { panic(err) }
+  fmt.Printf("phaseMarkers=%d threadSpans=%d firstPhase=%+v\n", len(payload.PhaseMarkers), len(payload.ThreadSpans), func() any { if len(payload.PhaseMarkers)>0 { return payload.PhaseMarkers[0] }; return nil }())
+}
+EOF
+go run /tmp/check_timeline_markers.go
+```
+
+### Technical details
+
+**Current task slice completed:**
+- merge manual/imported phase spans with SQL-derived phase signals
+- merge manual/imported thread spans with SQL-derived thread signals
+- add annotation-backed manual/import convention for Proposal 4 markers

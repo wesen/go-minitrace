@@ -34,7 +34,7 @@ RelatedFiles:
         Seed query for SQL-first bucket experiments
 ExternalSources: []
 Summary: 'Detailed implementation plan for Proposal 4: a read-only self-contained timeline visualization export that derives bucketized temporal structure, phase markers, file-activity bands, and jump targets back into the chronological reader.'
-LastUpdated: 2026-04-15T01:40:00-04:00
+LastUpdated: 2026-04-15T03:00:00-04:00
 WhatFor: Turn the Proposal 4 design into an implementable work plan with clear scope, architecture, sequencing, and validation rules.
 WhenToUse: Read this when beginning the actual implementation of the timeline export or when splitting the work into commits and tasks.
 ---
@@ -380,6 +380,51 @@ A first payload could look roughly like this:
   "source": "manual"
 }
 ```
+
+### Current manual/imported marker convention
+
+The current Go-side implementation now supports manual/imported phase and thread markers through ordinary synced `minitrace.Annotation` objects without extending the archive schema.
+
+Current convention:
+
+- use **session-scoped** annotations,
+- keep a standard valid annotation category such as `observation`,
+- add tag `timeline-phase` for phase markers,
+- add tag `timeline-thread` for thread spans,
+- place the marker payload in `annotation.content.detail` as JSON.
+
+Current detail JSON shapes:
+
+Phase marker annotation detail:
+
+```json
+{
+  "phase_id": "phase-debugging-loop",
+  "label": "Debugging loop",
+  "start_bucket": 8,
+  "end_bucket": 13,
+  "jump_turn_idx": 412,
+  "source": "manual"
+}
+```
+
+Thread span annotation detail:
+
+```json
+{
+  "thread_id": "thread-preview-path",
+  "label": "Preview path",
+  "file_path": "pkg/media/gst/preview.go",
+  "segments": [
+    { "start_bucket": 5, "end_bucket": 7 },
+    { "start_bucket": 10, "end_bucket": 12 }
+  ],
+  "jump_turn_idx": 266,
+  "source": "manual"
+}
+```
+
+This gives Proposal 4 a practical manual/import path immediately while preserving the existing minitrace annotation schema and SQLite/import/sync workflows.
 
 ### Final v1 payload decisions
 

@@ -23,8 +23,8 @@
 - [x] Build bucket arrays from SQL output
 - [x] Build file series from SQL output
 - [x] Build idle windows from SQL output
-- [ ] Merge manual/imported phase spans with SQL-derived phase signals
-- [ ] Merge manual/imported thread spans with SQL-derived thread signals
+- [x] Merge manual/imported phase spans with SQL-derived phase signals
+- [x] Merge manual/imported thread spans with SQL-derived thread signals
 - [x] Emit deterministic reader jump targets for buckets/phases/threads
 
 ### Browser rendering
