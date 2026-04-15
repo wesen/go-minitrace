@@ -18,8 +18,8 @@
 - [x] Document expected columns/result contracts for each query command
 
 ### Go-side payload assembly
-- [ ] Add timeline export package and types
-- [ ] Add query-result loader/merger for timeline query commands
+- [x] Add timeline export package and types
+- [x] Add query-result loader/merger for timeline query commands
 - [ ] Build bucket arrays from SQL output
 - [ ] Build file series from SQL output
 - [ ] Build idle windows from SQL output
