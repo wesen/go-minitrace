@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -268,6 +268,13 @@ function ToolCallRowImpl({
   showAnnotationActions = true,
 }: ToolCallRowProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
+
+  useEffect(() => {
+    if (focused) {
+      setExpanded(true);
+    }
+  }, [focused]);
+
   // Build a meaningful summary for the collapsed tool call row.
   // Priority: command (bash) > file_path (read/write/edit) > query (web_search) > tool_name
   const cmd =
@@ -283,6 +290,7 @@ function ToolCallRowImpl({
 
   return (
     <Box
+      id={`tool-call-${tc.id}`}
       data-part="tool-call"
       data-tool-call-id={tc.id}
       sx={{

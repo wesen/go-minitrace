@@ -217,6 +217,7 @@ function BlockBodyImpl({
         return (
           <Box
             key={t.idx}
+            id={`turn-${t.idx}`}
             data-turn-idx={String(t.idx)}
             sx={{
               mb: 1.5,
@@ -316,6 +317,10 @@ function BlockBodyImpl({
                   <ToolCallRow
                     key={tc.id}
                     tc={tc}
+                    defaultExpanded={
+                      focusedTarget?.scopeType === "tool_call" &&
+                      focusedTarget.targetId === tc.id
+                    }
                     focused={
                       focusedTarget?.scopeType === "tool_call" &&
                       focusedTarget.targetId === tc.id

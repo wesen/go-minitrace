@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
@@ -6,6 +6,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { Annotation } from "../types";
 import { BlockCard } from "../components/TranscriptViewer/BlockCard";
+import type { FocusedTranscriptTarget } from "../components/TranscriptViewer/types";
 import type { TranscriptExportPayload } from "./types";
 
 function buildAnnotationIndex(annotations: Annotation[]) {
@@ -38,9 +39,61 @@ function blockMatchesQuery(block: TranscriptExportPayload["session"]["blocks"][n
   });
 }
 
+function parseFocusedTarget(hash: string): FocusedTranscriptTarget | null {
+  const normalized = hash.replace(/^#/, "").trim();
+  if (!normalized) return null;
+
+  if (normalized.startsWith("turn-")) {
+    const targetId = normalized.slice("turn-".length);
+    if (targetId) return { scopeType: "turn", targetId, nonce: Date.now() };
+  }
+
+  if (normalized.startsWith("tool-call-")) {
+    const targetId = normalized.slice("tool-call-".length);
+    if (targetId) return { scopeType: "tool_call", targetId, nonce: Date.now() };
+  }
+
+  return null;
+}
+
+function blockContainsTarget(
+  block: TranscriptExportPayload["session"]["blocks"][number],
+  focusedTarget: FocusedTranscriptTarget | null,
+) {
+  if (!focusedTarget) return false;
+  if (focusedTarget.scopeType === "turn") {
+    return block.turns.some((turn) => String(turn.idx) === focusedTarget.targetId);
+  }
+  if (focusedTarget.scopeType === "tool_call") {
+    return block.turns.some((turn) =>
+      turn.tool_calls_in_turn.some((toolCall) => toolCall.id === focusedTarget.targetId),
+    );
+  }
+  return false;
+}
+
 export function TranscriptExportViewer({ data }: { data: TranscriptExportPayload }) {
   const [query, setQuery] = useState("");
+  const [focusedTarget, setFocusedTarget] = useState<FocusedTranscriptTarget | null>(null);
   const annotationIndex = useMemo(() => buildAnnotationIndex(data.annotations), [data.annotations]);
+
+  useEffect(() => {
+    const syncHash = () => setFocusedTarget(parseFocusedTarget(window.location.hash));
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, []);
+
+  useEffect(() => {
+    if (!focusedTarget) return;
+    const elementId = focusedTarget.scopeType === "turn"
+      ? `turn-${focusedTarget.targetId}`
+      : `tool-call-${focusedTarget.targetId}`;
+    const timer = window.setTimeout(() => {
+      document.getElementById(elementId)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 50);
+    return () => window.clearTimeout(timer);
+  }, [focusedTarget]);
 
   const visibleBlocks = useMemo(() => {
     const q = query.trim();
@@ -88,7 +141,9 @@ export function TranscriptExportViewer({ data }: { data: TranscriptExportPayload
           <BlockCard
             key={block.block_num}
             block={block}
-            defaultExpanded={i === 0}
+            defaultExpanded={focusedTarget == null && i === 0}
+            forceExpanded={blockContainsTarget(block, focusedTarget)}
+            focusedTarget={focusedTarget}
             turnAnnotations={annotationIndex.byTurn}
             toolCallAnnotations={annotationIndex.byToolCall}
             showAnnotationActions={false}
