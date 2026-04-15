@@ -9,9 +9,11 @@ import (
 )
 
 var (
-	reModuleScript = regexp.MustCompile(`(?s)<script\s+type="module"[^>]*src="([^"]+)"[^>]*></script>`)
-	reJSONScript   = regexp.MustCompile(`(?s)<script\s+id="minitrace-export-data"\s+type="application/json">.*?</script>`)
-	reTitle        = regexp.MustCompile(`(?s)<title>.*?</title>`)
+	reModuleScript       = regexp.MustCompile(`(?s)<script\s+type="module"[^>]*src="([^"]+)"[^>]*></script>`)
+	reRemainingScriptSrc = regexp.MustCompile(`(?s)<script[^>]*\ssrc="[^"]+"[^>]*></script>`)
+	reLinkHref           = regexp.MustCompile(`(?s)<link\b[^>]*href="[^"]+"[^>]*>`)
+	reJSONScript         = regexp.MustCompile(`(?s)<script\s+id="minitrace-export-data"\s+type="application/json">.*?</script>`)
+	reTitle              = regexp.MustCompile(`(?s)<title>.*?</title>`)
 )
 
 func RenderHTMLFromBuiltBundle(payload *ReaderExport, distDir string, opts RenderOptions) ([]byte, error) {
@@ -42,6 +44,8 @@ func RenderHTMLFromBuiltBundle(payload *ReaderExport, distDir string, opts Rende
 		return nil, err
 	}
 	html = reModuleScript.ReplaceAllString(html, `<script type="module">`+string(jsBytes)+`</script>`)
+	html = reRemainingScriptSrc.ReplaceAllString(html, "")
+	html = reLinkHref.ReplaceAllString(html, "")
 	html = reJSONScript.ReplaceAllString(html, `<script id="minitrace-export-data" type="application/json">`+string(payloadJSON)+`</script>`)
 	html = reTitle.ReplaceAllString(html, `<title>`+htmlEscapeTitle(pageTitle)+`</title>`)
 	return []byte(html), nil

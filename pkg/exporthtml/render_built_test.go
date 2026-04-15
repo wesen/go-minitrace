@@ -12,7 +12,7 @@ func TestRenderHTMLFromBuiltBundle(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(dir, "static"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	html := `<!doctype html><html><head><title>Old</title><script type="module" crossorigin src="/static/export-reader.js"></script></head><body><div id="root"></div><script id="minitrace-export-data" type="application/json">{"old":true}</script></body></html>`
+	html := `<!doctype html><html><head><title>Old</title><link rel="icon" href="/favicon.svg"><script type="module" crossorigin src="/static/export-reader.js"></script><script src="/extra.js"></script></head><body><div id="root"></div><script id="minitrace-export-data" type="application/json">{"old":true}</script></body></html>`
 	js := `console.log("reader bundle");`
 	if err := os.WriteFile(filepath.Join(dir, "export-reader.html"), []byte(html), 0o644); err != nil {
 		t.Fatal(err)
@@ -27,6 +27,9 @@ func TestRenderHTMLFromBuiltBundle(t *testing.T) {
 	text := string(out)
 	if !strings.Contains(text, `console.log("reader bundle");`) {
 		t.Fatalf("expected inlined module script")
+	}
+	if strings.Contains(text, `/favicon.svg`) || strings.Contains(text, `/extra.js`) {
+		t.Fatalf("expected external asset references to be stripped")
 	}
 	if !strings.Contains(text, `id="minitrace-export-data"`) || !strings.Contains(text, `reader-export-v1`) {
 		t.Fatalf("expected replaced payload json")
