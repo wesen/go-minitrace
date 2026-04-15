@@ -34,7 +34,7 @@ RelatedFiles:
         Seed query for SQL-first bucket experiments
 ExternalSources: []
 Summary: 'Detailed implementation plan for Proposal 4: a read-only self-contained timeline visualization export that derives bucketized temporal structure, phase markers, file-activity bands, and jump targets back into the chronological reader.'
-LastUpdated: 2026-04-15T03:00:00-04:00
+LastUpdated: 2026-04-15T04:00:00-04:00
 WhatFor: Turn the Proposal 4 design into an implementable work plan with clear scope, architecture, sequencing, and validation rules.
 WhenToUse: Read this when beginning the actual implementation of the timeline export or when splitting the work into commits and tasks.
 ---
@@ -670,6 +670,18 @@ Validation:
 - no console errors,
 - offline behavior,
 - acceptable load/render time for large sessions.
+
+Current implementation status (2026-04-15):
+- Added `go-minitrace export timeline` command under `cmd/go-minitrace/cmds/export/timeline.go`.
+- Added self-contained timeline renderer in `pkg/exporttimeline/render.go` and `pkg/exporttimeline/templates/*`.
+- Implemented browser runtime visuals for:
+  - operation heatmap,
+  - file activity bands,
+  - idle window shading,
+  - phase ribbon,
+  - thread bars with segmented spans,
+  - hover tooltips and legends,
+  - click-to-reader hash navigation (optionally anchored to `--reader-base-url`).
 
 ## Validation and test strategy
 

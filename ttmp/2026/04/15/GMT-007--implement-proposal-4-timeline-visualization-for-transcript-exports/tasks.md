@@ -28,20 +28,20 @@
 - [x] Emit deterministic reader jump targets for buckets/phases/threads
 
 ### Browser rendering
-- [ ] Add self-contained timeline HTML template/runtime
-- [ ] Render heatmap from bucket arrays
-- [ ] Render file activity bands
-- [ ] Render idle window shading
-- [ ] Render phase ribbon
-- [ ] Render thread bars with segmented support
-- [ ] Add hover labels / legends
-- [ ] Add click-to-reader navigation
+- [x] Add self-contained timeline HTML template/runtime
+- [x] Render heatmap from bucket arrays
+- [x] Render file activity bands
+- [x] Render idle window shading
+- [x] Render phase ribbon
+- [x] Render thread bars with segmented support
+- [x] Add hover labels / legends
+- [x] Add click-to-reader navigation
 
 ### Validation
-- [ ] Add backend tests for bucket parsing and timeline payload rendering
+- [x] Add backend tests for bucket parsing and timeline payload rendering
 - [ ] Add golden tests for query-command outputs on fixture sessions
-- [ ] Validate timeline export against session `bbf1bdf1-364a-44cb-8cd0-ebcba86dd1ad`
-- [ ] Verify browser view has no external asset/data requests
+- [x] Validate timeline export against session `bbf1bdf1-364a-44cb-8cd0-ebcba86dd1ad`
+- [x] Verify browser view has no external asset/data requests
 - [ ] Verify timeline clicks land on sensible reader targets
 - [ ] Verify output remains understandable and responsive on a long session
 

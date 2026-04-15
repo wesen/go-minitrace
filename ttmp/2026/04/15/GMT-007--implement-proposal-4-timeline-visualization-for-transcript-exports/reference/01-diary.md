@@ -12,6 +12,14 @@ DocType: reference
 Intent: long-term
 Owners: []
 RelatedFiles:
+    - Path: cmd/go-minitrace/cmds/export/timeline.go
+      Note: CLI entrypoint for self-contained Proposal 4 timeline export
+    - Path: pkg/exporttimeline/builder.go
+      Note: Builds timeline export metadata + payload from session and SQL timeline rows
+    - Path: pkg/exporttimeline/builder_test.go
+      Note: Timeline export builder coverage
+    - Path: pkg/exporttimeline/export.go
+      Note: Top-level timeline export envelope types and build options
     - Path: pkg/exporttimeline/loader.go
       Note: Programmatic loader that executes timeline query commands and decodes their results
     - Path: pkg/exporttimeline/manual.go
@@ -22,6 +30,18 @@ RelatedFiles:
       Note: Normalized timeline payload builder on top of SQL result sets
     - Path: pkg/exporttimeline/payload_test.go
       Note: Focused coverage for file-series densification and jump-hash shaping
+    - Path: pkg/exporttimeline/render.go
+      Note: Self-contained timeline HTML renderer with embedded template assets
+    - Path: pkg/exporttimeline/render_payload.go
+      Note: Script-tag-safe JSON payload marshaling for timeline exports
+    - Path: pkg/exporttimeline/render_test.go
+      Note: Timeline renderer regression coverage for payload escaping
+    - Path: pkg/exporttimeline/templates/timeline.css
+      Note: Timeline export styling and layout
+    - Path: pkg/exporttimeline/templates/timeline.html.tmpl
+      Note: Standalone timeline export HTML shell
+    - Path: pkg/exporttimeline/templates/timeline.js
+      Note: SVG timeline runtime (heatmap
     - Path: pkg/exporttimeline/types.go
       Note: Typed row/result models for the SQL-backed Proposal 4 bridge layer
     - Path: ttmp/2026/04/15/GMT-007--implement-proposal-4-timeline-visualization-for-transcript-exports/query-commands/timeline/timeline-buckets.sql
@@ -36,10 +56,11 @@ RelatedFiles:
       Note: Simple file-based thread candidate query
 ExternalSources: []
 Summary: Chronological implementation diary for Proposal 4 timeline visualization work.
-LastUpdated: 2026-04-15T03:05:00-04:00
+LastUpdated: 2026-04-15T04:10:00-04:00
 WhatFor: Capture the implementation sequence, rationale, validation results, and review guidance for the timeline export work.
 WhenToUse: Read this when continuing Proposal 4 work or reviewing how the SQL-first timeline foundation was established.
 ---
+
 
 
 
@@ -670,3 +691,146 @@ go run /tmp/check_timeline_markers.go
 - merge manual/imported phase spans with SQL-derived phase signals
 - merge manual/imported thread spans with SQL-derived thread signals
 - add annotation-backed manual/import convention for Proposal 4 markers
+
+## Step 5: Implement the first self-contained browser timeline renderer
+
+With the SQL and payload layers in place, this slice moved Proposal 4 into browser rendering while staying aligned with the read-only, self-contained requirement.
+
+The goal was to ship a practical first timeline HTML artifact end-to-end (CLI -> payload -> HTML/SVG runtime), not just isolated rendering helpers.
+
+### Prompt Context
+
+**User prompt (verbatim):** "Ok, continue with proposal 4 and the browser rendering"
+
+**Assistant interpretation:** Start and complete the first browser rendering slice now that manual/import + SQL merge logic is done.
+
+**Inferred user intent:** Deliver a usable timeline export artifact with real visuals and click behavior rather than more backend-only preparation.
+
+**Commit (code):** `22b60ab3e749515f2f0e0c096d0013a2e11f20da` — "feat: add self-contained proposal 4 timeline renderer"
+
+### What I did
+
+- Added a new timeline export envelope and builder layer:
+  - `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/export.go`
+  - `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/builder.go`
+- Added self-contained renderer plumbing:
+  - `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/assets.go`
+  - `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/render_payload.go`
+  - `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/render.go`
+  - `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/templates/timeline.html.tmpl`
+  - `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/templates/timeline.css`
+  - `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/templates/timeline.js`
+- Added renderer-focused tests:
+  - `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/builder_test.go`
+  - `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/render_test.go`
+- Added new CLI export command:
+  - `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/cmd/go-minitrace/cmds/export/timeline.go`
+  - wired into `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/cmd/go-minitrace/cmds/export/root.go`
+- Implemented first runtime visual sections in the self-contained timeline page:
+  - operation heatmap from bucket operation counts,
+  - file activity bands,
+  - idle window shading,
+  - phase ribbon,
+  - segmented thread bars,
+  - legends and hover tooltips,
+  - click-to-reader navigation via `#turn-*` hashes, optionally anchored to `--reader-base-url`.
+
+### Why
+
+Proposal 4’s value only materializes when the normalized payload can be viewed and navigated directly in a browser. Without this slice, the ticket still had analysis and payload layers but no timeline artifact for actual users.
+
+### What worked
+
+- `go-minitrace export timeline` now generates a standalone HTML timeline file.
+- The rendered timeline contains all required first-pass visual primitives listed in the task list.
+- The output is self-contained (inline CSS/JS/payload; no external `<script src>`/`<link href>` tags).
+- Script-tag-safe payload embedding is now in place for the timeline renderer too.
+- Unit tests for export builder and HTML renderer pass.
+- Full repository tests pass after the slice.
+- Real export generated successfully for:
+  - `019d03aa-ddee-7403-83d1-2ff075e82d50`
+  - `bbf1bdf1-364a-44cb-8cd0-ebcba86dd1ad`
+
+### What didn't work
+
+The Playwright MCP browser session was unavailable in this slice because the profile lock was already held by another active browser session, so I could not run in-harness Playwright click/network assertions immediately.
+
+As a temporary structural substitute, I validated the generated HTML files directly for:
+
+- embedded payload presence,
+- no external script/link tags,
+- expected timeline payload sections.
+
+### What I learned
+
+A plain SVG runtime is enough for a readable v1 timeline as long as the payload is already normalized and deterministic. The browser code can stay simple if the SQL + Go layers do the heavy lifting first.
+
+### What was tricky to build
+
+The main tricky part was balancing per-bucket detail with long-session readability. The renderer uses adaptive bucket widths and horizontal scrolling to keep the artifact usable on both shorter and longer sessions without introducing non-deterministic layout dependencies.
+
+### What warrants a second pair of eyes
+
+- visual scaling choices (bucket width, row caps) for very long sessions,
+- click semantics when `--reader-base-url` is not provided,
+- whether phase/thread labels should be made denser or remain conservative for legibility.
+
+### What should be done in the future
+
+- Add explicit browser-level interaction tests once Playwright is available again.
+- Add golden tests for SQL command outputs on fixture sessions.
+- Add a dedicated workflow note/playbook for preparing manual/import phase/thread annotations.
+- Consider moving timeline SQL commands into embedded/core command catalogs for easier out-of-the-box CLI usage.
+
+### Code review instructions
+
+Start here:
+- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/cmd/go-minitrace/cmds/export/timeline.go`
+- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/export.go`
+- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/builder.go`
+- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/render.go`
+- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/templates/timeline.js`
+- `/home/manuel/code/wesen/corporate-headquarters/go-minitrace/pkg/exporttimeline/templates/timeline.css`
+
+Then run:
+
+```bash
+cd /home/manuel/code/wesen/corporate-headquarters/go-minitrace
+go test ./pkg/exporttimeline ./cmd/go-minitrace/cmds/export ./cmd/go-minitrace -count=1
+go test ./... -count=1
+```
+
+Ad hoc timeline export checks used in this slice:
+
+```bash
+# session from local output/active
+cd /home/manuel/code/wesen/corporate-headquarters/go-minitrace
+go run ./cmd/go-minitrace export timeline \
+  --query-repository ./ttmp/2026/04/15/GMT-007--implement-proposal-4-timeline-visualization-for-transcript-exports/query-commands \
+  --archive-glob './output/active/*/*.minitrace.json' \
+  --session-id 019d03aa-ddee-7403-83d1-2ff075e82d50 \
+  --reader-base-url /tmp/gstreamer-reader-react.html \
+  --output /tmp/gstreamer-timeline.html
+
+# target GST session
+cd /home/manuel/code/wesen/corporate-headquarters/go-minitrace
+go run ./cmd/go-minitrace export timeline \
+  --query-repository ./ttmp/2026/04/15/GMT-007--implement-proposal-4-timeline-visualization-for-transcript-exports/query-commands \
+  --archive-glob './ttmp/2026/04/14/GST-2026-04-13--gstreamer-pi-sessions-analysis-with-go-minitrace/output/active/*/*.minitrace.json' \
+  --session-id bbf1bdf1-364a-44cb-8cd0-ebcba86dd1ad \
+  --reader-base-url /tmp/gstreamer-reader-react.html \
+  --output /tmp/gstreamer-timeline-bbf1.html
+```
+
+### Technical details
+
+**Current task slice completed:**
+- add self-contained timeline HTML template/runtime
+- render heatmap from bucket arrays
+- render file activity bands
+- render idle window shading
+- render phase ribbon
+- render thread bars with segmented support
+- add hover labels / legends
+- add click-to-reader navigation
+- add backend rendering tests and real-session timeline export validation

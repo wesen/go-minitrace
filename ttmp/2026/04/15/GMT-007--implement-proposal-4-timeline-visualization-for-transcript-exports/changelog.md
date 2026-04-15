@@ -15,3 +15,7 @@ Step 3: Added the first normalized timeline payload layer on top of the SQL resu
 ## 2026-04-15
 
 Step 4: Added merged Proposal 4 phase/thread structures on top of the SQL signals, including annotation-backed manual/import support via `timeline-phase` / `timeline-thread` tags plus detail JSON, grouped derived phase markers/thread spans, and merge rules that let curated markers coexist with or override matching derived candidates.
+
+## 2026-04-15
+
+Step 5: Added the first browser-rendering slice for Proposal 4 with a self-contained HTML/SVG runtime (`pkg/exporttimeline/templates/*`), a new `go-minitrace export timeline` command, timeline export builder/renderer plumbing, and interactive visuals for heatmap/file bands/idle shading/phase ribbon/thread bars with hover labels and click-to-reader hash navigation.
