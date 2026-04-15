@@ -42,8 +42,8 @@
 - [ ] Add golden tests for query-command outputs on fixture sessions
 - [x] Validate timeline export against session `bbf1bdf1-364a-44cb-8cd0-ebcba86dd1ad`
 - [x] Verify browser view has no external asset/data requests
-- [ ] Verify timeline clicks land on sensible reader targets
-- [ ] Verify output remains understandable and responsive on a long session
+- [x] Verify timeline clicks land on sensible reader targets
+- [x] Verify output remains understandable and responsive on a long session
 
 ### Documentation and workflow
 - [ ] Add a workflow note explaining how timeline query commands feed the exporter

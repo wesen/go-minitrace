@@ -19,3 +19,7 @@ Step 4: Added merged Proposal 4 phase/thread structures on top of the SQL signal
 ## 2026-04-15
 
 Step 5: Added the first browser-rendering slice for Proposal 4 with a self-contained HTML/SVG runtime (`pkg/exporttimeline/templates/*`), a new `go-minitrace export timeline` command, timeline export builder/renderer plumbing, and interactive visuals for heatmap/file bands/idle shading/phase ribbon/thread bars with hover labels and click-to-reader hash navigation.
+
+## 2026-04-15
+
+Step 6: Ran Playwright/browser validation against the real `bbf1...` timeline export over local HTTP, verified zero console errors in clean runs, confirmed no external data/asset requests beyond the served HTML pages, and confirmed click-to-reader navigation lands on valid `#turn-*` anchors in the reader export.

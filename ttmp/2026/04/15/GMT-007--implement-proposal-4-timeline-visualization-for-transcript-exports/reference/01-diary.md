@@ -56,7 +56,7 @@ RelatedFiles:
       Note: Simple file-based thread candidate query
 ExternalSources: []
 Summary: Chronological implementation diary for Proposal 4 timeline visualization work.
-LastUpdated: 2026-04-15T04:10:00-04:00
+LastUpdated: 2026-04-15T04:30:00-04:00
 WhatFor: Capture the implementation sequence, rationale, validation results, and review guidance for the timeline export work.
 WhenToUse: Read this when continuing Proposal 4 work or reviewing how the SQL-first timeline foundation was established.
 ---
@@ -834,3 +834,105 @@ go run ./cmd/go-minitrace export timeline \
 - add hover labels / legends
 - add click-to-reader navigation
 - add backend rendering tests and real-session timeline export validation
+
+## Step 6: Run Playwright browser validation for the timeline renderer
+
+With Playwright available again, I validated the actual timeline artifact in-browser and verified navigation back into the Proposal 2 reader.
+
+### Prompt Context
+
+**User prompt (verbatim):** "ok, playwright is free"
+
+**Assistant interpretation:** Execute the pending browser validation checks immediately against the Proposal 4 export.
+
+**Inferred user intent:** Move from structural/offline checks to real browser evidence for rendering, requests, console health, and click navigation behavior.
+
+**Commit (code):** pending — docs-only follow-up after validation capture
+
+### What I did
+
+- Regenerated timeline export with a browser-servable reader link:
+  - `--reader-base-url /gstreamer-reader-react.html`
+  - output: `/tmp/gstreamer-timeline-bbf1-playwright.html`
+- Served `/tmp` over local HTTP (`python3 -m http.server 8778 --directory /tmp`).
+- Opened timeline export in Playwright and validated:
+  - section rendering for heatmap, file bands, idle windows, phase ribbon, and thread bars,
+  - zero console errors on clean load,
+  - host-scoped network requests only to local served pages,
+  - click-to-reader navigation from timeline cells into reader `#turn-*` anchors.
+- Captured concrete click outcomes:
+  - first timeline cell -> `.../gstreamer-reader-react.html#turn-0`
+  - phase-ribbon cell -> `.../gstreamer-reader-react.html#turn-163`
+- Verified the destination anchor exists in reader DOM (`document.getElementById('turn-...')` true).
+- Captured screenshots:
+  - `timeline-export-view.png`
+  - `timeline-reader-after-click.png`
+
+### Why
+
+The ticket still had two validation tasks that are best proven with real browser automation:
+
+- sensible click target landing,
+- practical readability/responsiveness on a long real session.
+
+This step closes those with direct evidence.
+
+### What worked
+
+- Timeline page loads and renders correctly in Playwright.
+- No console errors in clean runs.
+- No external network/data pulls from the timeline artifact itself when filtering to host traffic.
+- Click navigation into reader works and lands on valid turn anchors.
+- The long `bbf1...` session timeline is readable in the current layout with the existing adaptive-width + horizontal scroll strategy.
+
+### What didn't work
+
+No blocker in this run. The only early noise was a local `favicon.ico` 404 from the test server, which was resolved by adding `/tmp/favicon.ico` during validation.
+
+### What I learned
+
+The current Proposal 4 renderer architecture is workable as a v1:
+
+- SQL and payload layers remain the source of truth,
+- browser runtime stays lightweight and deterministic,
+- click-back to Proposal 2 reader is reliable.
+
+### What warrants a second pair of eyes
+
+- optional refinement of reader-base-url ergonomics (for less path mismatch risk),
+- richer browser automation assertions per visual section,
+- whether to add a tiny built-in favicon data URL to avoid incidental server noise.
+
+### What should be done in the future
+
+- add dedicated Playwright regression scripts for timeline interactions,
+- add golden SQL fixture outputs,
+- keep tuning visual density and labeling for very long sessions.
+
+### Code review instructions
+
+Re-run validation with:
+
+```bash
+cd /home/manuel/code/wesen/corporate-headquarters/go-minitrace
+go run ./cmd/go-minitrace export timeline \
+  --query-repository ./ttmp/2026/04/15/GMT-007--implement-proposal-4-timeline-visualization-for-transcript-exports/query-commands \
+  --archive-glob './ttmp/2026/04/14/GST-2026-04-13--gstreamer-pi-sessions-analysis-with-go-minitrace/output/active/*/*.minitrace.json' \
+  --session-id bbf1bdf1-364a-44cb-8cd0-ebcba86dd1ad \
+  --reader-base-url /gstreamer-reader-react.html \
+  --output /tmp/gstreamer-timeline-bbf1-playwright.html
+```
+
+Then load `http://127.0.0.1:8778/gstreamer-timeline-bbf1-playwright.html` and validate:
+
+- console errors = 0,
+- host requests only for timeline + reader pages,
+- timeline cell click -> reader `#turn-*`,
+- target anchor exists.
+
+### Technical details
+
+**Current task slice completed:**
+- browser validation of Proposal 4 timeline renderer in Playwright
+- verify timeline clicks land on sensible reader targets
+- verify output remains understandable/responsive for long session
