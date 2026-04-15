@@ -60,7 +60,7 @@ This was the right place to begin because Proposal 4 is supposed to be more than
 
 **Inferred user intent:** Turn Proposal 4 from planning into real implementation work while keeping strong ticket hygiene and a clear narrative for future continuation.
 
-**Commit (code):** pending — "docs: add SQL-first proposal 4 timeline foundation"
+**Commit (code):** `bab166a0cbc639fd0f2fab488099791c8740b4bf` — "docs: add sql-first proposal 4 timeline foundation"
 
 ### What I did
 
@@ -204,7 +204,7 @@ This slice focused on that bridge layer and intentionally stopped short of rende
 
 **Inferred user intent:** Make the timeline plan executable in code, not just as ticket-local SQL files.
 
-**Commit (code):** pending — "feat: add sql-backed timeline data loader"
+**Commit (code):** `7c3db9a57c3be1775a7eb2f264dba7e972295364` — "feat: add sql-backed timeline data loader"
 
 ### What I did
 
@@ -366,7 +366,7 @@ This slice built that first normalized payload layer in `pkg/exporttimeline` wit
 
 **Inferred user intent:** Progress steadily from analysis primitives toward a real export pipeline while keeping each intermediate layer testable.
 
-**Commit (code):** pending — "feat: build normalized timeline payload from sql results"
+**Commit (code):** `db498ac363db8ed552b23a6140c9abab48f7261a` — "feat: build normalized timeline payload from sql results"
 
 ### What I did
 
