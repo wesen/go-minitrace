@@ -1,0 +1,29 @@
+body { font-family: Inter, system-ui, sans-serif; margin: 0; background: #0b1020; color: #e7ecf3; }
+#root { max-width: 1100px; margin: 0 auto; padding: 24px; }
+.header { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+.meta { color:#9fb0c8; font-size:14px; display:flex; gap:12px; flex-wrap:wrap; }
+.controls { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+input[type="search"] { flex:1; min-width:260px; background:#11182d; color:#e7ecf3; border:1px solid #2b3550; border-radius:8px; padding:10px 12px; }
+.block { border:1px solid #2b3550; border-radius:12px; margin-bottom:14px; overflow:hidden; background:#10172a; }
+.block summary { cursor:pointer; list-style:none; padding:14px 16px; background:#121c33; }
+.block summary::-webkit-details-marker { display:none; }
+.block-title { font-weight:700; }
+.block-stats { color:#9fb0c8; font-size:13px; margin-top:4px; }
+.block-body { padding:16px; }
+.turn { border-left:4px solid #33415f; padding:10px 12px; margin-bottom:12px; background:#0e1527; border-radius:8px; }
+.turn.user { border-left-color:#7cc7ff; }
+.turn.assistant { border-left-color:#c8a7ff; }
+.turn.system { border-left-color:#f3c96a; }
+.turn-head { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+.turn-id, .ts { color:#90a4c0; font-size:12px; font-family: ui-monospace, monospace; }
+.turn-content { white-space:pre-wrap; line-height:1.5; }
+.annotation-list, .tool-list { margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+.annotation { border:1px solid #35506f; background:#0f1a30; border-radius:8px; padding:8px 10px; }
+.annotation .ann-head { font-size:12px; color:#9fc4ff; margin-bottom:4px; }
+.tool { border:1px solid #28344f; border-radius:8px; overflow:hidden; }
+.tool summary { cursor:pointer; padding:8px 10px; background:#121a2d; list-style:none; }
+.tool pre { margin:0; padding:10px; overflow:auto; background:#0a0f1b; color:#b8f7c5; font-size:12px; }
+.tool .tool-error { color:#ffb4b4; }
+.badges { display:flex; gap:6px; flex-wrap:wrap; }
+.badge { font-size:11px; padding:2px 6px; border-radius:999px; border:1px solid #42557c; color:#b8c8e0; }
+.hidden { display:none !important; }

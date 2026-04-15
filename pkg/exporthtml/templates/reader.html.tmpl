@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ .PageTitle }}</title>
+  <style>{{ .EmbeddedCSS }}</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script id="minitrace-export-data" type="application/json">{{ .PayloadJSON }}</script>
+  <script>{{ .EmbeddedJS }}</script>
+</body>
+</html>

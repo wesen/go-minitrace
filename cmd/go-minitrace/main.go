@@ -9,6 +9,7 @@ import (
 	"github.com/go-go-golems/go-minitrace/cmd/go-minitrace/cmds/annotate"
 	"github.com/go-go-golems/go-minitrace/cmd/go-minitrace/cmds/convert"
 	"github.com/go-go-golems/go-minitrace/cmd/go-minitrace/cmds/discover"
+	exportcmd "github.com/go-go-golems/go-minitrace/cmd/go-minitrace/cmds/export"
 	"github.com/go-go-golems/go-minitrace/cmd/go-minitrace/cmds/query"
 	"github.com/go-go-golems/go-minitrace/cmd/go-minitrace/cmds/serve"
 	validatecmd "github.com/go-go-golems/go-minitrace/cmd/go-minitrace/cmds/validate"
@@ -44,12 +45,14 @@ func main() {
 	cobra.CheckErr(err)
 	serveCmd, err := serve.NewCommand()
 	cobra.CheckErr(err)
+	exportCommand, err := exportcmd.NewCommand()
+	cobra.CheckErr(err)
 	validateCommand, err := validatecmd.NewCommand()
 	cobra.CheckErr(err)
 	annotateCmd, err := annotate.NewCommand()
 	cobra.CheckErr(err)
 
-	rootCmd.AddCommand(discoverCmd, convertCmd, queryCmd, serveCmd, validateCommand, annotateCmd)
+	rootCmd.AddCommand(discoverCmd, convertCmd, queryCmd, serveCmd, exportCommand, validateCommand, annotateCmd)
 
 	cobra.CheckErr(rootCmd.Execute())
 }
