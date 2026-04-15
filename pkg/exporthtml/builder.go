@@ -37,10 +37,13 @@ func BuildReaderExport(session minitrace.Session) (*ReaderExport, error) {
 	blocks := buildSessionBlocks(session, tcByID)
 	indices := buildIndices(session, blocks)
 
+	annotations := make([]minitrace.Annotation, 0, len(session.Annotations))
+	annotations = append(annotations, session.Annotations...)
+
 	return &ReaderExport{
 		Version:     "reader-export-v1",
 		Session:     normalizeSessionDetail(session, blocks),
-		Annotations: append([]minitrace.Annotation(nil), session.Annotations...),
+		Annotations: annotations,
 		Indices:     indices,
 	}, nil
 }

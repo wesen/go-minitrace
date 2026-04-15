@@ -75,7 +75,8 @@ function blockContainsTarget(
 export function TranscriptExportViewer({ data }: { data: TranscriptExportPayload }) {
   const [query, setQuery] = useState("");
   const [focusedTarget, setFocusedTarget] = useState<FocusedTranscriptTarget | null>(null);
-  const annotationIndex = useMemo(() => buildAnnotationIndex(data.annotations), [data.annotations]);
+  const annotations = Array.isArray(data.annotations) ? data.annotations : [];
+  const annotationIndex = useMemo(() => buildAnnotationIndex(annotations), [annotations]);
 
   useEffect(() => {
     const syncHash = () => setFocusedTarget(parseFocusedTarget(window.location.hash));

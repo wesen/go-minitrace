@@ -1,7 +1,6 @@
 package exporthtml
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -17,7 +16,7 @@ var (
 )
 
 func RenderHTMLFromBuiltBundle(payload *ReaderExport, distDir string, opts RenderOptions) ([]byte, error) {
-	payloadJSON, err := json.Marshal(payload)
+	payloadJSON, err := marshalPayloadForScriptTag(payload)
 	if err != nil {
 		return nil, err
 	}
@@ -43,11 +42,11 @@ func RenderHTMLFromBuiltBundle(payload *ReaderExport, distDir string, opts Rende
 	if err != nil {
 		return nil, err
 	}
-	html = reModuleScript.ReplaceAllString(html, `<script type="module">`+string(jsBytes)+`</script>`)
+	html = reModuleScript.ReplaceAllLiteralString(html, `<script type="module">`+string(jsBytes)+`</script>`)
 	html = reRemainingScriptSrc.ReplaceAllString(html, "")
 	html = reLinkHref.ReplaceAllString(html, "")
-	html = reJSONScript.ReplaceAllString(html, `<script id="minitrace-export-data" type="application/json">`+string(payloadJSON)+`</script>`)
-	html = reTitle.ReplaceAllString(html, `<title>`+htmlEscapeTitle(pageTitle)+`</title>`)
+	html = reJSONScript.ReplaceAllLiteralString(html, `<script id="minitrace-export-data" type="application/json">`+payloadJSON+`</script>`)
+	html = reTitle.ReplaceAllLiteralString(html, `<title>`+htmlEscapeTitle(pageTitle)+`</title>`)
 	return []byte(html), nil
 }
 

@@ -2,7 +2,6 @@ package exporthtml
 
 import (
 	"bytes"
-	"encoding/json"
 	"html/template"
 	"strings"
 )
@@ -19,7 +18,7 @@ type templateData struct {
 }
 
 func RenderHTML(payload *ReaderExport, opts RenderOptions) ([]byte, error) {
-	payloadJSON, err := json.Marshal(payload)
+	payloadJSON, err := marshalPayloadForScriptTag(payload)
 	if err != nil {
 		return nil, err
 	}

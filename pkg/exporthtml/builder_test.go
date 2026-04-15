@@ -1,6 +1,8 @@
 package exporthtml
 
 import (
+	"bytes"
+	"encoding/json"
 	"testing"
 
 	"github.com/go-go-golems/go-minitrace/pkg/minitrace"
@@ -56,5 +58,37 @@ func TestBuildReaderExport(t *testing.T) {
 	}
 	if got := payload.Indices.Search.Terms["recording.go"]; len(got) == 0 {
 		t.Fatalf("expected search term for file path, got %#v", got)
+	}
+}
+
+func TestBuildReaderExportUsesEmptyAnnotationArray(t *testing.T) {
+	session := minitrace.Session{
+		ID:             "session-empty-ann",
+		Classification: "internal",
+		Turns: []minitrace.Turn{{
+			Index: 0,
+			Role:  "user",
+		}},
+	}
+
+	payload, err := BuildReaderExport(session)
+	if err != nil {
+		t.Fatalf("BuildReaderExport failed: %v", err)
+	}
+	if payload.Annotations == nil {
+		t.Fatalf("expected empty annotation slice, got nil")
+	}
+	if len(payload.Annotations) != 0 {
+		t.Fatalf("expected no annotations, got %d", len(payload.Annotations))
+	}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+	if string(b) == "" || !json.Valid(b) {
+		t.Fatalf("expected valid payload json")
+	}
+	if !bytes.Contains(b, []byte(`"annotations":[]`)) {
+		t.Fatalf("expected annotations to marshal as []: %s", string(b))
 	}
 }
