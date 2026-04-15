@@ -16,6 +16,7 @@ func newHTMLCommand() (*cobra.Command, error) {
 	var sessionID string
 	var outputPath string
 	var title string
+	var webDistDir string
 
 	cmd := &cobra.Command{
 		Use:   "html",
@@ -43,7 +44,12 @@ func newHTMLCommand() (*cobra.Command, error) {
 			if err != nil {
 				return err
 			}
-			html, err := exporthtml.RenderHTML(payload, exporthtml.RenderOptions{PageTitle: title})
+			var html []byte
+			if strings.TrimSpace(webDistDir) != "" {
+				html, err = exporthtml.RenderHTMLFromBuiltBundle(payload, webDistDir, exporthtml.RenderOptions{PageTitle: title})
+			} else {
+				html, err = exporthtml.RenderHTML(payload, exporthtml.RenderOptions{PageTitle: title})
+			}
 			if err != nil {
 				return err
 			}
@@ -61,5 +67,6 @@ func newHTMLCommand() (*cobra.Command, error) {
 	cmd.Flags().StringVar(&sessionID, "session-id", "", "Session ID to export")
 	cmd.Flags().StringVar(&outputPath, "output", "", "Output HTML path")
 	cmd.Flags().StringVar(&title, "title", "", "Optional page title override")
+	cmd.Flags().StringVar(&webDistDir, "web-dist-dir", "", "Optional built export-reader bundle directory to inline (e.g. web/dist-export-reader)")
 	return cmd, nil
 }

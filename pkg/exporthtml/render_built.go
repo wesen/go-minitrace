@@ -1,0 +1,53 @@
+package exporthtml
+
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+)
+
+var (
+	reModuleScript = regexp.MustCompile(`(?s)<script\s+type="module"[^>]*src="([^"]+)"[^>]*></script>`)
+	reJSONScript   = regexp.MustCompile(`(?s)<script\s+id="minitrace-export-data"\s+type="application/json">.*?</script>`)
+	reTitle        = regexp.MustCompile(`(?s)<title>.*?</title>`)
+)
+
+func RenderHTMLFromBuiltBundle(payload *ReaderExport, distDir string, opts RenderOptions) ([]byte, error) {
+	payloadJSON, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	pageTitle := strings.TrimSpace(opts.PageTitle)
+	if pageTitle == "" {
+		pageTitle = payload.Session.Title
+	}
+	if pageTitle == "" {
+		pageTitle = payload.Session.ID
+	}
+	htmlPath := filepath.Join(distDir, "export-reader.html")
+	htmlBytes, err := os.ReadFile(htmlPath)
+	if err != nil {
+		return nil, err
+	}
+	html := string(htmlBytes)
+	matches := reModuleScript.FindStringSubmatch(html)
+	if len(matches) != 2 {
+		return nil, os.ErrInvalid
+	}
+	jsPath := filepath.Join(distDir, strings.TrimPrefix(matches[1], "/"))
+	jsBytes, err := os.ReadFile(jsPath)
+	if err != nil {
+		return nil, err
+	}
+	html = reModuleScript.ReplaceAllString(html, `<script type="module">`+string(jsBytes)+`</script>`)
+	html = reJSONScript.ReplaceAllString(html, `<script id="minitrace-export-data" type="application/json">`+string(payloadJSON)+`</script>`)
+	html = reTitle.ReplaceAllString(html, `<title>`+htmlEscapeTitle(pageTitle)+`</title>`)
+	return []byte(html), nil
+}
+
+func htmlEscapeTitle(s string) string {
+	replacer := strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;")
+	return replacer.Replace(s)
+}
